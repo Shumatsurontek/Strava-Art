@@ -1,6 +1,13 @@
+import sys
+import os
+
+# Ensure your virtual environment or PYTHONPATH is correctly configured
+
 from app import create_app
 
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
+    from distutils import strtobool
+    debug_mode = bool(strtobool(os.getenv('FLASK_DEBUG', 'False')))

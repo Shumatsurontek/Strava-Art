@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd" version="1.1" creator="gpx.py -- https://github.com/tkrajina/gpxpy">
+  <trk>
+    <name>Generated Route</name>
+    <trkseg>
+      <trkpt lat="44.8350313" lon="-0.5752439">
+      </trkpt>
+      <trkpt lat="44.8350408" lon="-0.5751528">
+      </trkpt>
+      <trkpt lat="44.8349947" lon="-0.5757253">
+      </trkpt>
+      <trkpt lat="44.833969" lon="-0.5758319">
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
