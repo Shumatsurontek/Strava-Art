@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPX Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      color: #333;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      margin: auto;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    button {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .message {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #e7f3fe;
+      color: #31708f;
+    }
+  </style>
+</head>
+<body>
+  <h1>GPX Generator</h1>
+  <form id="gpxForm">
+    <label for="city">City:</label>
+    <input type="text" id="city" name="city" placeholder="Enter city name" required>
+    
+    <label for="shape">Shape:</label>
+    <select id="shape" name="shape" required>
+      <option value="circle">Circle</option>
+      <option value="square">Square</option>
+    </select>
+    
+    <label for="distance">Distance (meters):</label>
+    <input type="number" id="distance" name="distance" placeholder="Enter distance in meters" required>
+    
+    <button type="submit">Generate GPX</button>
+  </form>
+
+  <div id="message" class="message" style="display: none;"></div>
+
+  <script>
+    document.getElementById('gpxForm').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const city = document.getElementById('city').value;
+      const shape = document.getElementById('shape').value;
+      const distance = document.getElementById('distance').value;
+
+      const messageDiv = document.getElementById('message');
+      messageDiv.style.display = 'none';
+
+      try {
+        const response = await fetch('/generate-trace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ city, shape, distance })
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'trace.gpx';
+          link.click();
+          messageDiv.textContent = "GPX file generated successfully!";
+        } else {
+          const errorData = await response.json();
+          messageDiv.textContent = errorData.error || "An error occurred.";
+        }
+      } catch (error) {
+        messageDiv.textContent = "An error occurred: " + error.message;
+      }
+
+      messageDiv.style.display = 'block';
+    });
+  </script>
+</body>
+</html>
