@@ -9,5 +9,4 @@ app = create_app()
 
 if __name__ == "__main__":
     debug_mode = os.getenv('FLASK_DEBUG', 'False').lower() in ['true', '1', 't']
-    from distutils import strtobool
-    debug_mode = bool(strtobool(os.getenv('FLASK_DEBUG', 'False')))
+    app.run(debug=debug_mode)

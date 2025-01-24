@@ -1,17 +1,20 @@
-from app.utils.graph_cache import get_graph
 from flask import request, jsonify, Blueprint, render_template
+from app.utils.graph_cache import get_graph
 from app.utils.gpx_service import generate_gpx
 from app.utils.map_utils import save_map
 from app.utils.route_utils import get_center_node, create_circular_route, create_square_route
 from dotenv import load_dotenv
 import traceback
 
-# Charger les variables d'environnement
 load_dotenv()
 
 bp = Blueprint('routes', __name__)
 
+
 def validate_input(data):
+    """
+    Valide les données de la requête.
+    """
     required_fields = ["city", "shape", "distance"]
     for field in required_fields:
         if field not in data or not data[field]:
@@ -29,6 +32,9 @@ def validate_input(data):
 
 @bp.route('/')
 def index():
+    """
+    Point d'entrée pour la page d'accueil.
+    """
     return render_template('index.html')
 
 
@@ -38,36 +44,56 @@ def generate_trace():
     Génère un trace GPX et une carte en fonction des données saisies.
     """
     data = request.json
-    print("Données reçues :", data)  # Log des données reçues pour débogage
+    print("Données reçues :", data)
     try:
-        # Validation des données d'entrée
+        # Valider les données d'entrée
         validate_input(data)
 
+        # Récupérer les informations de la requête
         city = data["city"]
         shape = data["shape"]
         distance = int(data["distance"])
 
-        # Charger le graphe routier
+        # Charger le graphe pour la ville donnée
         graph = get_graph(city)
         if not graph:
+            print(f"Erreur : aucun graphe trouvé pour la ville : {city}")
             raise ValueError(f"No graph data available for city: {city}")
 
-        # Générer l'itinéraire basé sur la forme
+        print(f"Graph chargé pour {city}. Nombre de nœuds : {len(graph.nodes())}")
+
+        # Récupérer le nœud central
+        center_node, _ = get_center_node(graph, city)
+        if center_node is None:
+            print("Erreur : impossible de déterminer le nœud central.")
+            raise ValueError("Could not determine the center node for the graph.")
+
+        # Créer l'itinéraire en fonction de la forme
         if shape == "circle":
-            center_node, _ = get_center_node(graph, city)
             route = create_circular_route(graph, center_node, distance)
         elif shape == "square":
-            center_node, _ = get_center_node(graph, city)
             route = create_square_route(graph, center_node, distance)
         else:
             raise ValueError(f"Unsupported shape: {shape}")
 
-        # Convertir les nœuds en coordonnées géographiques
+        # Vérifier si la route a été générée
+        if not route or len(route) == 0:
+            print("Erreur : l'itinéraire généré est vide.")
+            raise ValueError("The generated route is empty. Please check your input data.")
+
+        # Extraire les coordonnées pour la carte
         coords = [(graph.nodes[node]['y'], graph.nodes[node]['x']) for node in route]
 
-        # Générer les fichiers GPX et la carte
-        gpx_file, _ = generate_gpx(graph, route, city, shape)
+        # Générer le fichier GPX et la carte
+        gpx_file, gpx_path = generate_gpx(route, graph, city, shape)
         map_file = save_map(coords, coords[0])
+
+        # Vérification des fichiers générés
+        if not gpx_file or not map_file:
+            print("Erreur : échec de la génération des fichiers GPX ou de la carte.")
+            raise ValueError("Failed to generate GPX file or map.")
+
+        print(f"Fichiers générés avec succès : {gpx_file}, {map_file}")
 
         return jsonify({
             "gpx_file": gpx_file,
@@ -75,7 +101,8 @@ def generate_trace():
         })
 
     except ValueError as ve:
+        print(f"Erreur de validation : {ve}")
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
-        traceback.print_exc()
+        print("Erreur inattendue :", traceback.format_exc())
         return jsonify({"error": str(e)}), 500
